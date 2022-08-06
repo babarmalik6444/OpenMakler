@@ -27,32 +27,39 @@ class AuthService
        $this->scout_redirect_url = config('scout24.scout24_token_url');
    }
 
-  public function getRequestToken()
+  public function getRequestToken($reast_estate_id)
   {
-    
-    $client = new Client(['verify' => false]);
-    $headers = [
-            'Accept' => 'application/xml',
-            'Authorization' => 'OAuth oauth_consumer_key="OpenmaklerKey",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1659635327",oauth_nonce="CFO4W6vkDDl",oauth_version="1.0",oauth_callback="http://openmakler/app/real-estates/21/edit",oauth_signature="Cp5G8b9p6rGpnRomgUzS8iLp4y4="'
-      ];
-    $request = new Request('GET', 'https://rest.sandbox-immobilienscout24.de/restapi/security/oauth/request_token', $headers);
-    
-    $res = $client->sendAsync($request)->wait();
-    $statusCode = $res->getStatusCode();
-    if($statusCode==200)
-    {
-      $content = $res->getBody()->getContents();
-      parse_str($content, $res);
-      $TokenUrl = $this->scout_redirect_url.$res['oauth_token'];
-      dd($res['oauth_token']);
-      return $TokenUrl;
-      //$this->confirmAccess($res);
-    }
-    else
-    {
-      return "Something went worng";
-    }
-    
+      $stack = HandlerStack::create();
+
+      $middleware = new Oauth1([
+          'consumer_key'    => $this->oauth1_key,
+          'consumer_secret' => $this->oauth1_secret,
+          'request_method' => Oauth1::REQUEST_METHOD_QUERY,
+          'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
+          'callback' => 'http://openmakler/app/real-estates/'.$reast_estate_id.'/edit'
+      ]);
+      $stack->push($middleware);
+
+      $client = new Client([
+          'base_uri' => 'https://rest.sandbox-immobilienscout24.de/',
+          'handler' => $stack,
+          'verify' => false
+      ]);
+
+// Set the "auth" request option to "oauth" to sign using oauth
+      $res = $client->post('restapi/security/oauth/request_token', ['auth' => 'oauth']);
+      $statusCode = $res->getStatusCode();
+      if($statusCode==200)
+      {
+          $content = $res->getBody()->getContents();
+          parse_str($content, $res);
+          $TokenUrl = $this->scout_redirect_url.$res['oauth_token'];
+          return $TokenUrl;
+      }
+      else
+      {
+          return false;
+      }
   }
 
   public function confirmAccess($response)
@@ -68,7 +75,7 @@ class AuthService
   }
 
   public function getAccessToken($verifier)
-  {     
+  {
         $client = new Client(['verify' => false]);
         $headers = [
                     'Authorization' => 'OAuth oauth_consumer_key="OpenmaklerKey",oauth_token="0c710b4d-c364-4768-8f48-386ee8679740",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1659128604",oauth_nonce="GuoZIsXyzKd",oauth_version="1.0",oauth_callback="http%3A%2F%2Fopenmakler%2Fapp%2Freal-estates%2F21%2Fedit",oauth_verifier="nbYCQ1",oauth_signature="Y3wK3WYzhUFmkyUcHQqeEPS8lsM%3D"',
@@ -92,25 +99,25 @@ public function addProperty($record)
       'Content-Type' => 'application/xml',
       'Cookie' => 'SESSION=ODBmYjc2MzctOTBkNC00MDE3LThjZDQtNGMxODJiZmMxYzE4'
     ];
-    $body = '<realestates:apartmentBuy xmlns:realestates="http://rest.immobilienscout24.de/schema/offer/realestates/1.0" xmlns:xlink="http://www.w3.org/1999/xlink"> 
-     <title>'.$record->objekttitel.'</title> 
-     <address> 
-       <street>'.$record->geo->strasse.'</street> 
-       <houseNumber>'.$record->geo->hausnummer.'</houseNumber> 
-       <postcode>'.$record->geo->plz.'</postcode> 
-        <city>'.$record->geo->ort.'</city> 
-     </address> 
-     <showAddress>true</showAddress> 
-     <price> 
-       <value>'.$record->preis->kaufpreis.'</value> 
-       <currency>EUR</currency> 
+    $body = '<realestates:apartmentBuy xmlns:realestates="http://rest.immobilienscout24.de/schema/offer/realestates/1.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+     <title>'.$record->objekttitel.'</title>
+     <address>
+       <street>'.$record->geo->strasse.'</street>
+       <houseNumber>'.$record->geo->hausnummer.'</houseNumber>
+       <postcode>'.$record->geo->plz.'</postcode>
+        <city>'.$record->geo->ort.'</city>
+     </address>
+     <showAddress>true</showAddress>
+     <price>
+       <value>'.$record->preis->kaufpreis.'</value>
+       <currency>EUR</currency>
      </price>
-     <livingSpace>'.$record->flaechen->wohnflaeche.'</livingSpace> 
-     <numberOfRooms>'.$record->flaechen->anzahl_wohn_schlafzimmer.'</numberOfRooms> 
-     <courtage> 
-       <hasCourtage>YES</hasCourtage> 
-       <courtage>7,14%</courtage> 
-     </courtage> 
+     <livingSpace>'.$record->flaechen->wohnflaeche.'</livingSpace>
+     <numberOfRooms>'.$record->flaechen->anzahl_wohn_schlafzimmer.'</numberOfRooms>
+     <courtage>
+       <hasCourtage>YES</hasCourtage>
+       <courtage>7,14%</courtage>
+     </courtage>
      </realestates:apartmentBuy>';
     $request = new Request('POST', 'https://rest.sandbox-immobilienscout24.de/restapi/api/offer/v1.0/user/me/realestate?oauth_consumer_key=OpenmaklerKey&oauth_token=07b0aead-0185-4e18-9c1b-2681019e007e&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1659457545&oauth_nonce='.$nonce.'&oauth_version=1.0&oauth_verifier=kocanH&oauth_signature=iyR6aWbB%2FHa6Begf91pJBrlf5QQ%3D', $headers, $body);
     $res = $client->sendAsync($request)->wait();
@@ -138,25 +145,25 @@ public function UpdateProperty($record)
           'Cookie' => 'SESSION=ZmFlNGJkNjUtMjA1MS00MDBiLTg2YzctMjI2NmEyNWYzYzYz'
         ];
         $body = '<realestates:apartmentBuy xmlns:realestates="http://rest.immobilienscout24.de/schema/offer/realestates/1.0" xmlns:xlink="http://www.w3.org/1999/xlink">
-         <externalId>'.$record->scout_api_id.'</externalId> 
-         <title>'.$record->objekttitel.'</title> 
-         <address> 
-           <street>'.$record->geo->strasse.'</street> 
-           <houseNumber>'.$record->geo->hausnummer.'</houseNumber> 
-           <postcode>'.$record->geo->plz.'</postcode> 
-            <city>'.$record->geo->ort.'</city> 
-         </address> 
-         <showAddress>true</showAddress> 
-         <price> 
-           <value>'.$record->preis->kaufpreis.'</value> 
-           <currency>EUR</currency> 
+         <externalId>'.$record->scout_api_id.'</externalId>
+         <title>'.$record->objekttitel.'</title>
+         <address>
+           <street>'.$record->geo->strasse.'</street>
+           <houseNumber>'.$record->geo->hausnummer.'</houseNumber>
+           <postcode>'.$record->geo->plz.'</postcode>
+            <city>'.$record->geo->ort.'</city>
+         </address>
+         <showAddress>true</showAddress>
+         <price>
+           <value>'.$record->preis->kaufpreis.'</value>
+           <currency>EUR</currency>
          </price>
-         <livingSpace>'.$record->flaechen->wohnflaeche.'</livingSpace> 
-         <numberOfRooms>'.$record->flaechen->anzahl_wohn_schlafzimmer.'</numberOfRooms> 
-         <courtage> 
-           <hasCourtage>YES</hasCourtage> 
-           <courtage>7,14%</courtage> 
-         </courtage> 
+         <livingSpace>'.$record->flaechen->wohnflaeche.'</livingSpace>
+         <numberOfRooms>'.$record->flaechen->anzahl_wohn_schlafzimmer.'</numberOfRooms>
+         <courtage>
+           <hasCourtage>YES</hasCourtage>
+           <courtage>7,14%</courtage>
+         </courtage>
          </realestates:apartmentBuy>';
         $request = new Request('PUT', 'https://rest.sandbox-immobilienscout24.de/restapi/api/offer/v1.0/user/me/realestate/'.$record->scout_api_id.'?oauth_consumer_key=OpenmaklerKey&oauth_token=07b0aead-0185-4e18-9c1b-2681019e007e&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1659457998&oauth_nonce=Qc96PLInXyH&oauth_version=1.0&oauth_verifier=kocanH&oauth_signature=zZuTGOF5obVpktxmTeyJX8qy1Do%3D', $headers, $body);
         $res = $client->sendAsync($request)->wait();

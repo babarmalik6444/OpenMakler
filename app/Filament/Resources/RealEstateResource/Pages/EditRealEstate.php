@@ -21,8 +21,8 @@ class EditRealEstate extends EditRecord
         if (Request::has('oauth_verifier'))
         {
             $this->scoutAPIVerifier = Request::get('oauth_verifier');
-            $this->scoutAPIService->getAccessToken($this->scoutAPIVerifier); 
-            dd($this->scoutAPIVerifier);   
+            $this->scoutAPIService->getAccessToken($this->scoutAPIVerifier);
+            dd($this->scoutAPIVerifier);
         }
     }
 
@@ -57,15 +57,14 @@ class EditRealEstate extends EditRecord
         //dd($this->record->scout_api_id);
         // dd($this->scoutAPIService->getRequestToken($this->record));
         // if($this->record->scout_api_id =='')
-        // { 
+        // {
         //      $url = $this->scoutAPIService->addProperty($this->record);
         //      $scout_api_id = $url['message']['id'];
         //      RealEstate::where('id', $this->record->id)->update(['scout_api_id'=>$scout_api_id]);
         // } else{
-        //        $url = $this->scoutAPIService->UpdateProperty($this->record); 
+        //        $url = $this->scoutAPIService->UpdateProperty($this->record);
         // }
-        $url = $this->scoutAPIService->getRequestToken($this->record);
-        stream_get_contents(fopen($url, "r"));
+        $url = $this->scoutAPIService->getRequestToken($this->record->id);
         return response()->redirectGuest($url);
     }
 
