@@ -1,0 +1,24 @@
+@import '../../vendor/filament/filament/resources/css/app.css';
+
+.filament-sidebar {
+    background-color: rgba(47,64,80,var(--tw-bg-opacity));
+    color: rgb(203, 213, 225);
+    width: 14rem;
+}
+.filament-sidebar header {
+    border: none;
+}
+
+@media (min-width: 1024px) {
+    .filament-main.lg\:pl-80:not(.lg\:pl-\[5\.4rem\]) {
+        padding-left: 14rem;
+    }
+}
+
+.filament-login-page form::before {
+    display: none;
+}
+
+#impersonate-banner {
+    background: rgba(5,150,105,var(--tw-bg-opacity)) !important;
+}
