@@ -20,9 +20,9 @@ class EditRealEstate extends EditRecord
         $this->scoutAPIService = new AuthService;
         if (Request::has('oauth_verifier'))
         {
-            $this->scoutAPIVerifier = Request::get('oauth_verifier');
-            $this->scoutAPIService->getAccessToken(Request::get('oauth_token'), $this->scoutAPIVerifier);
-            dd($this->scoutAPIVerifier);
+            //$this->scoutAPIVerifier = Request::get('oauth_verifier');
+            $longtermToken = $this->scoutAPIService->getAccessToken(Request::get('oauth_token'), Request::get('oauth_verifier'));
+            dd($longtermToken);
         }
     }
 

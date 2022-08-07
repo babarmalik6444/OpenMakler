@@ -36,7 +36,7 @@ class AuthService
           'consumer_secret' => $this->oauth1_secret,
           'request_method' => Oauth1::REQUEST_METHOD_HEADER,
           'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
-          'callback' => 'http://openmakler2/app/real-estates/'.$reast_estate_id.'/edit'
+          'callback' => 'http://localhost/app/real-estates/'.$reast_estate_id.'/edit'
       ]);
       $stack->push($middleware);
 
@@ -56,6 +56,7 @@ class AuthService
           ScouteApi::query()->delete();
           $ScoutData = new ScouteApi();
           $ScoutData->oauth_token_secret=$res['oauth_token_secret'];
+          $ScoutData->oauth_token=$res['oauth_token'];
           $ScoutData->save();
           $TokenUrl = $this->scout_redirect_url.$res['oauth_token'];
           return $TokenUrl;
@@ -68,30 +69,36 @@ class AuthService
 
   public function getAccessToken($token,$verifier)
   {
-      $stack = HandlerStack::create();
-      $ScoutData = ScouteApi::latest()->first();
-      //dd($ScoutData);
-      $middleware = new Oauth1([
-          'consumer_key'    => $this->oauth1_key,
-          'consumer_secret' => $this->oauth1_secret,
-          'request_method' => Oauth1::REQUEST_METHOD_HEADER,
-          'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
-          'callback' => 'http://openmakler2/app/real-estates/21/edit',
-          'oauth_token' => $token,
-          'oauth_secret' => $ScoutData->oauth_token_secret,
-          'oauth_verifier' => $verifier
-      ]);
-      dd($middleware);
-      $stack->push($middleware);
+      try {
+          $stack = HandlerStack::create();
+          $ScoutData = ScouteApi::latest()->first();
+          //dd($ScoutData);
+          $middleware = new Oauth1([
+              'consumer_key'    => $this->oauth1_key,
+              'consumer_secret' => $this->oauth1_secret,
+              'callback' => 'http://localhost/app/real-estates/21/edit',
+              'oauth_secret' => $ScoutData->oauth_token_secret,
+              'oauth_verifier' => $verifier,
+              'oauth_token' => $ScoutData->oauth_token,
+              'request_method' => Oauth1::REQUEST_METHOD_HEADER,
+              'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC
+          ]);
 
-      $client = new Client([
-          'base_uri' => 'https://rest.sandbox-immobilienscout24.de/',
-          'handler' => $stack,
-          'verify' => false
-      ]);
+          $stack->push($middleware);
 
-// Set the "auth" request option to "oauth" to sign using oauth
-        $res = $client->get('restapi/security/oauth/access_token', ['auth' => 'oauth']);
+          $client = new Client([
+              'base_uri' => 'https://rest.sandbox-immobilienscout24.de/',
+              'handler' => $stack,
+              'verify' => false
+          ]);
+         // dd($client);
+        // Set the "auth" request option to "oauth" to sign using oauth
+          $res = $client->post('restapi/security/oauth/access_token', ['auth' => 'oauth']);
+      }
+      catch (\Exception $e){
+          dd($e->getResponse()->getBody()->getContents());
+      }
+
 //        $client = new Client(['verify' => false]);
 //        $headers = [
 //                    'Authorization' => 'OAuth oauth_consumer_key="OpenmaklerKey",oauth_token="0c710b4d-c364-4768-8f48-386ee8679740",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1659128604",oauth_nonce="GuoZIsXyzKd",oauth_version="1.0",oauth_callback="http%3A%2F%2Fopenmakler%2Fapp%2Freal-estates%2F21%2Fedit",oauth_verifier="nbYCQ1",oauth_signature="Y3wK3WYzhUFmkyUcHQqeEPS8lsM%3D"',
