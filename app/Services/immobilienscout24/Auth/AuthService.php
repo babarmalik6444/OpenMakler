@@ -5,6 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Subscriber\Oauth\Oauth1;
+use App\Models\ScouteApi;
 /**
  * Class AuthService.
  */
@@ -35,7 +36,7 @@ class AuthService
           'consumer_secret' => $this->oauth1_secret,
           'request_method' => Oauth1::REQUEST_METHOD_HEADER,
           'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
-          'callback' => 'http://127.0.0.1/app/real-estates/'.$reast_estate_id.'/edit'
+          'callback' => 'http://openmakler2/app/real-estates/'.$reast_estate_id.'/edit'
       ]);
       $stack->push($middleware);
 
@@ -52,7 +53,10 @@ class AuthService
       {
           $content = $res->getBody()->getContents();
           parse_str($content, $res);
-          session('oauth_token_secret', urldecode($res['oauth_token_secret']));
+          ScouteApi::query()->delete();
+          $ScoutData = new ScouteApi();
+          $ScoutData->oauth_token_secret=$res['oauth_token_secret'];
+          $ScoutData->save();
           $TokenUrl = $this->scout_redirect_url.$res['oauth_token'];
           return $TokenUrl;
       }
@@ -65,15 +69,16 @@ class AuthService
   public function getAccessToken($token,$verifier)
   {
       $stack = HandlerStack::create();
-
+      $ScoutData = ScouteApi::latest()->first();
+      //dd($ScoutData);
       $middleware = new Oauth1([
           'consumer_key'    => $this->oauth1_key,
           'consumer_secret' => $this->oauth1_secret,
           'request_method' => Oauth1::REQUEST_METHOD_HEADER,
           'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
-          'callback' => 'http://127.0.0.1/app/real-estates/21/edit',
+          'callback' => 'http://openmakler2/app/real-estates/21/edit',
           'oauth_token' => $token,
-          'oauth_secret' => session('oauth_token_secret'),
+          'oauth_secret' => $ScoutData->oauth_token_secret,
           'oauth_verifier' => $verifier
       ]);
       dd($middleware);
