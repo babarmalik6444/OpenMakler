@@ -16,6 +16,7 @@ class AuthService
     protected string $is24_domain;
     protected string $oauth1_callbackUrl;
     protected string $scout24_token_url;
+    public string $return_url = 'http://127.0.0.1';
 
     function __construct()
     {
@@ -33,7 +34,12 @@ class AuthService
         {
           $stack = HandlerStack::create();
 
-          $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC, 'callback' => 'http://openmakler2/app/real-estates/' . $reast_estate_id . '/edit']);
+          $middleware = new Oauth1(['consumer_key' => $this->oauth1_key,
+              'consumer_secret' => $this->oauth1_secret,
+              'request_method' => Oauth1::REQUEST_METHOD_HEADER,
+              'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC,
+              'callback' => $this->return_url.'/app/real-estates/' . $reast_estate_id . '/edit'
+          ]);
           $stack->push($middleware);
 
           $client = new Client(['base_uri' => 'https://rest.sandbox-immobilienscout24.de/', 'handler' => $stack, 'verify' => false]);
@@ -71,7 +77,7 @@ class AuthService
             $stack = HandlerStack::create();
             $ScoutData = ScouteApi::latest()->first();
             //dd($ScoutData);
-            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => 'http://openmakler2/app/real-estates/' . $id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
+            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => $this->return_url.'/app/real-estates/' . $id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
 
             $stack->push($middleware);
 
@@ -79,23 +85,15 @@ class AuthService
             //dd($client);
             // Set the "auth" request option to "oauth" to sign using oauth
             $res = $client->post('restapi/security/oauth/access_token', ['auth' => 'oauth']);
-            $content = $res->getBody()
-                ->getContents();
-            parse_str($content, $res);
-            ScouteApi::where('id', 1)->update(['oauth_token_secret' => $res['oauth_token_secret'], 'oauth_token' => $res['oauth_token'], 'verifier' => $verifier]);
+
             $statusCode = $res->getStatusCode();
             if ($statusCode == 200)
             {
                 $content = $res->getBody()
                     ->getContents();
                 parse_str($content, $res);
-                ScouteApi::query()->truncate();
-                $ScoutData = new ScouteApi();
-                $ScoutData->oauth_token_secret = $res['oauth_token_secret'];
-                $ScoutData->oauth_token = $res['oauth_token'];
-                $ScoutData->save();
-                $TokenUrl = $this->scout_redirect_url . $res['oauth_token'];
-                return $TokenUrl;
+                ScouteApi::where('id', 1)->update(['oauth_token_secret' => $res['oauth_token_secret'], 'oauth_token' => $res['oauth_token'], 'verifier' => $verifier]);
+                return true;
             } else
               {
                 return false;
@@ -143,7 +141,7 @@ class AuthService
             $stack = HandlerStack::create();
             $ScoutData = ScouteApi::latest()->first();
 
-            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => 'http://openmakler2/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
+            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => $this->return_url.'/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
 
             $stack->push($middleware);
 
@@ -214,7 +212,7 @@ class AuthService
             $stack = HandlerStack::create();
             $ScoutData = ScouteApi::latest()->first();
 
-            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => 'http://openmakler2/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
+            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => $this->return_url.'/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
 
             $stack->push($middleware);
 
@@ -247,7 +245,7 @@ class AuthService
             $stack = HandlerStack::create();
             $ScoutData = ScouteApi::latest()->first();
 
-            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => 'http://openmakler2/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
+            $middleware = new Oauth1(['consumer_key' => $this->oauth1_key, 'consumer_secret' => $this->oauth1_secret, 'callback' => $this->return_url.'/app/real-estates/' . $record->id . '/edit', 'token_secret' => $ScoutData->oauth_token_secret, 'verifier' => $ScoutData->verifier, 'token' => $ScoutData->oauth_token, 'request_method' => Oauth1::REQUEST_METHOD_HEADER, 'signature_method' => Oauth1::SIGNATURE_METHOD_HMAC]);
 
             $stack->push($middleware);
 
