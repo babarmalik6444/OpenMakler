@@ -8,6 +8,7 @@ use Filament\Resources\Pages\EditRecord;
 use App\Services\immobilienscout24\Auth\AuthService;
 use Illuminate\Support\Facades\Request;
 use App\Models\Openimmo\RealEstate;
+use App\Models\ScouteApi;
 
 class EditRealEstate extends EditRecord
 {
@@ -21,8 +22,18 @@ class EditRealEstate extends EditRecord
         if (Request::has('oauth_verifier'))
         {
             //$this->scoutAPIVerifier = Request::get('oauth_verifier');
-            $longtermToken = $this->scoutAPIService->getAccessToken(Request::get('oauth_token'), Request::get('oauth_verifier'));
-            dd($longtermToken);
+            $PropertRecord = RealEstate::find(request()->segments()[2]);
+            
+            $longtermToken = $this->scoutAPIService->getAccessToken(Request::get('oauth_token'), Request::get('oauth_verifier'),$PropertRecord->id);
+
+              if($PropertRecord->scout_api_id =='')
+            {
+                 $url = $this->scoutAPIService->addProperty($PropertRecord);
+                 $scout_api_id = $url['message']['id'];
+                 RealEstate::where('id', $PropertRecord->id)->update(['scout_api_id'=>$scout_api_id]);
+            } else{
+                   $url = $this->scoutAPIService->UpdateProperty($PropertRecord);
+            }  
         }
     }
 
@@ -54,18 +65,26 @@ class EditRealEstate extends EditRecord
 
     public function ExportAPI()
     {
-        //dd($this->record->scout_api_id);
-        // dd($this->scoutAPIService->getRequestToken($this->record));
-        // if($this->record->scout_api_id =='')
-        // {
-        //      $url = $this->scoutAPIService->addProperty($this->record);
-        //      $scout_api_id = $url['message']['id'];
-        //      RealEstate::where('id', $this->record->id)->update(['scout_api_id'=>$scout_api_id]);
-        // } else{
-        //        $url = $this->scoutAPIService->UpdateProperty($this->record);
-        // }
-        $url = $this->scoutAPIService->getRequestToken($this->record->id);
-        return response()->redirectGuest($url);
+        $ScoutData = ScouteApi::latest()->first();
+        if($ScoutData != null && $ScoutData->verifier !='')
+        {
+              if($this->record->scout_api_id =='')
+            {
+                 $url = $this->scoutAPIService->addProperty($this->record);
+                 $scout_api_id = $url['message']['id'];
+                 RealEstate::where('id', $this->record->id)->update(['scout_api_id'=>$scout_api_id]);
+            } else{
+                    if($this->scoutAPIService->UpdateProperty($this->record)){
+                        return response('Data Updated Succefully');
+                    }
+            }  
+        }
+        else{
+            $url = $this->scoutAPIService->getRequestToken($this->record->id);
+            return response()->redirectGuest($url);
+        }
+        
+        
     }
 
     public function DeleteAPI()
