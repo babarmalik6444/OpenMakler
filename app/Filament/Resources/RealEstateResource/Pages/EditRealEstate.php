@@ -30,7 +30,7 @@ class EditRealEstate extends EditRecord
                     $res = $this->scoutAPIService->addProperty($PropertRecord);
                     $scout_api_id = $res['message']['id'];
                     RealEstate::where('id', $PropertRecord->id)->update(['scout_api_id' => $scout_api_id]);
-                    $this->notify('success', "Data Updated Succesfully.");
+                    $this->notify('success', "Data Saved Succesfully.");
                 } else {
                     $res = $this->scoutAPIService->UpdateProperty($PropertRecord);
                     $this->notify('success', "Data Updated Succesfully.");

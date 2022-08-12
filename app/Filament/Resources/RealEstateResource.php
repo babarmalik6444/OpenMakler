@@ -231,9 +231,9 @@ class RealEstateResource extends Resource
                 ->required(),
 
             // Strasse + hausnummer
-            Forms\Components\TextInput::make("strasse"),
+            Forms\Components\TextInput::make("strasse")->required(),
             Forms\Components\Grid::make(2)->schema([
-                Forms\Components\TextInput::make("hausnummer"),
+                Forms\Components\TextInput::make("hausnummer")->required(),
                 Forms\Components\TextInput::make("wohnungsnr"),
             ])->columnSpan(1),
 
@@ -275,7 +275,8 @@ class RealEstateResource extends Resource
             // Kaufpreise
             Forms\Components\TextInput::make("kaufpreis")
                 ->numeric()
-                ->postfix("€"),
+                ->postfix("€")
+                ->required(),
             Forms\Components\TextInput::make("kaufpreisnetto")
                 ->numeric()
                 ->postfix("€"),
@@ -356,7 +357,7 @@ class RealEstateResource extends Resource
     private static function form_flachen()
     {
         return static::hasOneForm("Fläche", "flaechen", [
-            Forms\Components\TextInput::make("wohnflaeche")->numeric()->postfix("m"),
+            Forms\Components\TextInput::make("wohnflaeche")->numeric()->postfix("m")->required(),
             Forms\Components\TextInput::make("grundstuecksflaeche")->numeric()->postfix("m"),
             Forms\Components\TextInput::make("kellerflaeche")->numeric()->postfix("m"),
             Forms\Components\TextInput::make("gartenflaeche")->numeric()->postfix("m"),
@@ -364,7 +365,7 @@ class RealEstateResource extends Resource
             Forms\Components\TextInput::make("balkon_terrasse_flaeche")->numeric()->postfix("m"),
             Forms\Components\TextInput::make("vermietbare_flaeche")->numeric()->postfix("m"),
             Forms\Components\TextInput::make("anzahl_wohneinheiten")->numeric(),
-            Forms\Components\TextInput::make("anzahl_wohn_schlafzimmer")->numeric(),
+            Forms\Components\TextInput::make("anzahl_wohn_schlafzimmer")->numeric()->required(),
             Forms\Components\TextInput::make("anzahl_balkone")->numeric(),
             Forms\Components\TextInput::make("anzahl_terrassen"),
             Forms\Components\TextInput::make("anzahl_logia"),
