@@ -53,25 +53,25 @@ class EditRealEstate extends EditRecord
             return [
                 Actions\DeleteAction::make(),
                 Actions\Action::make("openimmo")
-                    ->action("openImmoDownload"),
+                ->action("openImmoDownload"),
                 Actions\Action::make("Update in Scout24")
-                    ->action("ExportAPI"),
+                ->action("ExportAPI"),
                 Actions\Action::make("Delete in Scout24")
-                    ->action("DeleteAPI"),
+                ->action("DeleteAPI"),
                 Actions\Action::make("archive")
-                    ->label(fn(): string => $this->record->published ? "Archivieren" : "Reaktivieren")
-                    ->action("archiveRealestate")
+                ->label(fn(): string => $this->record->published ? "Archivieren" : "Reaktivieren")
+                ->action("archiveRealestate")
             ];
         }
         return [
             Actions\DeleteAction::make(),
             Actions\Action::make("openimmo")
-                ->action("openImmoDownload"),
+            ->action("openImmoDownload"),
             Actions\Action::make("Create in Scout24")
-                ->action("ExportAPI"),
+            ->action("ExportAPI"),
             Actions\Action::make("archive")
-                ->label(fn(): string => $this->record->published ? "Archivieren" : "Reaktivieren")
-                ->action("archiveRealestate")
+            ->label(fn(): string => $this->record->published ? "Archivieren" : "Reaktivieren")
+            ->action("archiveRealestate")
         ];
     }
 
@@ -90,55 +90,55 @@ class EditRealEstate extends EditRecord
         $ScoutData = ScouteApi::latest()->first();
         if($ScoutData != null && $ScoutData->verifier !='')
         {
-              if($this->record->scout_api_id =='')
-            {
-                 $res = $this->scoutAPIService->addProperty($this->record);
-                 if($res){
-                     $scout_api_id = $res['message']['id'];
-                     RealEstate::where('id', $this->record->id)->update(['scout_api_id'=>$scout_api_id]);
-                     $this->notify('success', "Data added Successfully.");
-                 } else {
-                     $this->notify('error', "Something went wrong.");
-                 }
+          if($this->record->scout_api_id =='')
+          {
+             $res = $this->scoutAPIService->addProperty($this->record);
+             if($res){
+                 $scout_api_id = $res['message']['id'];
+                 RealEstate::where('id', $this->record->id)->update(['scout_api_id'=>$scout_api_id]);
+                 $this->notify('success', "Data added Successfully.");
+             } else {
+                 $this->notify('error', "Something went wrong.");
+             }
 
-            } else{
-                    if($this->scoutAPIService->UpdateProperty($this->record)){
-                        $this->notify('success', "Data Updated Successfully.");
-                    }
-                    else{
-                        $this->notify('error', "Something went wrong.");
-                    }
+         } else{
+            if($this->scoutAPIService->UpdateProperty($this->record)){
+                $this->notify('success', "Data Updated Successfully.");
+            }
+            else{
+                $this->notify('error', "Something went wrong.");
             }
         }
-        else{
-            $url = $this->scoutAPIService->getRequestToken($this->record->id);
-            return response()->redirectGuest($url);
-        }
-
-
     }
-
-    public function DeleteAPI()
-    {
-        if($this->record->scout_api_id){
-            $res = $this->scoutAPIService->DeleteProperty($this->record);
-            $this->notify('success', "Data deleted Successfully from Scout24 API.");
-        } else{
-            $this->notify('info', "This property does not exist in Scout API.");
-        }
-
+    else{
+        $url = $this->scoutAPIService->getRequestToken($this->record->id);
+        return response()->redirectGuest($url);
     }
 
 
-    public function archiveRealestate()
-    {
-        if($this->record->published) {
-            $this->record->archiveIt();
-        }
-        else {
-            $this->record->reactivateIt();
-        }
+}
 
-        $this->notify('success', "Wurde erfolgreich " . ($this->record->published ? "archiviert" : "reaktiviert") . ".");
+public function DeleteAPI()
+{
+    if($this->record->scout_api_id){
+        $res = $this->scoutAPIService->DeleteProperty($this->record);
+        $this->notify('success', "Data deleted Successfully from Scout24 API.");
+    } else{
+        $this->notify('info', "This property does not exist in Scout API.");
     }
+
+}
+
+
+public function archiveRealestate()
+{
+    if($this->record->published) {
+        $this->record->archiveIt();
+    }
+    else {
+        $this->record->reactivateIt();
+    }
+
+    $this->notify('success', "Wurde erfolgreich " . ($this->record->published ? "archiviert" : "reaktiviert") . ".");
+}
 }
