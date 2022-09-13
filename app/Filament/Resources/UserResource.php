@@ -22,8 +22,8 @@ class UserResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $user = auth()->user();
-
+        $record = auth()->user();
+        //dd($record->isSystemAdminOrSystemUser());
         return $form
             ->schema(
                 SidebarLayout::make()
@@ -41,25 +41,25 @@ class UserResource extends Resource
                         Forms\Components\BelongsToSelect::make("company_id")
                             ->label("Unternehmen")
                             ->relationship("company", "name")
-                            ->hidden(fn($record): bool => $record->isSystemAdminOrSystemUser()),
+                            ->hidden(fn($record): bool => !empty($record)?$record->isSystemAdminOrSystemUser():false),
 
                         // Company Office
                         Forms\Components\BelongsToSelect::make("company_office_id")
-                            ->required(fn(User $record): bool => !$record->isSystemAdminOrSystemUser())
+                            ->required(fn(User $record): bool => !empty($record)? !$record->isSystemAdminOrSystemUser():true)
                             ->label(__("FirmenZweigstelle"))
                             ->relationship("companyOffice", "name")
-                            ->hidden(fn(User $record): bool => $record->isSystemAdminOrSystemUser()),
+                            ->hidden(fn($record): bool => !empty($record)?$record->isSystemAdminOrSystemUser():true),
 
                         // User role
                         Forms\Components\BelongsToSelect::make("user_role_id")
                             ->label(__("User Rolle"))
-                            ->hidden(fn() => !$user->isSystemAdminOrSystemUser())
-                            ->disabled(fn() => !$user->isSystemAdmin())
+                            ->hidden(fn() => !$record->isSystemAdminOrSystemUser())
+                            ->disabled(fn() => !$record->isSystemAdmin())
                             ->relationship('userRole', 'name'),
                         Forms\Components\Placeholder::make(__("User Rolle"))
                             ->label(__("User Rolle"))
-                            ->content(fn ($record): string => optional($record->userRole)->name ?: '')
-                            ->hidden(fn($record) => $user->isSystemAdminOrSystemUser() || !$record->exists),
+                            ->content(fn ($record): string => !empty($record)?(optional($record->userRole)->name ?: ''):'')
+                            ->hidden(fn($record) => (!empty($record)?$record->isSystemAdminOrSystemUser():false) || (!empty($record)?!$record->exists:false)),
 
                     ])
                     ->toArray()

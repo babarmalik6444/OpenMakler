@@ -9,7 +9,7 @@ return new class extends Migration{
     public function up()
     {
         Schema::create('external_apis', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string("name");
             $table->string("driver")->default(OpenImmoDriver::class);
             $table->string("server");
